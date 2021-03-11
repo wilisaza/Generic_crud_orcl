@@ -1,4 +1,5 @@
 const oracledb = require('oracledb');
+const {functions} = require('./crudOrclFunctions');
 
 const sentences = {
 
@@ -79,8 +80,8 @@ const sentences = {
 
     insertString(table, data) {
         let dataMod = data;
-        let date = new Date();
-        let colum;
+        //let date = new Date();
+        //let colum;
 
         //dataMod.user_updated = dataMod.user_created;
         //dataMod.date_created = this.dateToYMD(date);
@@ -97,7 +98,13 @@ const sentences = {
         for (let colum in dataMod) {
             if (dataMod[colum] != null) {
                 if (typeof dataMod[colum] === 'string') {
-                    sqlString += `'${dataMod[colum]}', `;
+                    if((dataMod[colum].substring(0,2) == '20') && (parseInt(dataMod[colum].substring(4,6),10) <= 12) && (parseInt(dataMod[colum].substring(6,8),10) <= 31)){
+                        sqlString += `TO_TIMESTAMP('${functions.jsonDateCam(dataMod[colum])}','YYYY-MM-DD'), `;
+                    }
+                    else{
+                        sqlString += `'${dataMod[colum]}', `; 
+                    }
+                    
                 } else {
                     sqlString += `${dataMod[colum]}, `;
                 }

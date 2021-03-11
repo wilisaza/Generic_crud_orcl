@@ -96,11 +96,13 @@ const orclApi = {
         }
 
     },
-
+////////////////////////////////////////////////////////////////////////////
     async insertOneBody(data) {
-        let objname = data.table_name;
-        let objdata = functions.extractItem(data,'table_name');
-        console.info('previo',objname, objdata, data);
+        let convData = functions.keysToLowerCase(data);
+        let objname = convData.table_name;
+        let objdata = functions.extractItem(convData,'table_name');
+        let idData = convData.id;
+        //console.info('previo',objname, objdata, convData);
         try {
             try {
                 connection = await oracledb.getConnection(config.dborcl);
@@ -110,7 +112,7 @@ const orclApi = {
             const sql = sentences.insertString(objname, objdata);
             console.info(sql);
             const res = await connection.execute(sql);
-            return this.getOne(objname, objdata);
+            return this.getOneId(objname, idData);
         } catch (error) {
             return error;
         } finally {
@@ -125,6 +127,74 @@ const orclApi = {
 
     },
 
+    async insertOneRec(data) {
+        let convData = functions.keysToLowerCase(data);
+        let objName = convData.table_name;
+        let objData = functions.extractItem(convData,'table_name');
+        let idData = convData.id;
+        let eraseData = [];
+        let n = 0;
+        let i = 0;
+        let otherData;
+        for(let colum in objData){
+            if (Array.isArray(objData[colum])){
+                n = objData[colum].length;
+                i = 0;
+                while (i < n) {
+                    otherData = await this.insertOneRec(objData[colum][i]);
+                    i++;
+                }
+                eraseData.push(colum) ;
+            }
+        }
+        i=0;
+        while (i < eraseData.length){
+            objData = await functions.extractItem(objData,eraseData[i]);    
+            i++;
+        }
+        try {
+            try {
+                connection = await oracledb.getConnection(config.dborcl);
+            } catch (error) {
+                console.log(error);
+            }
+            const sql = sentences.insertString(objName, objData);
+            console.info(sql);
+            const res = await connection.execute(sql);
+            return this.getOneId(objName, idData);
+        } catch (error) {
+            return error;
+        } finally {
+            if (connection) {
+                try {
+                    await connection.close();
+                } catch (error) {
+                    return error;
+                }
+            }
+        }
+
+    },
+
+    async getOneId(table, id) {
+        try {
+            connection = await oracledb.getConnection(config.dborcl);
+            const sql = `SELECT * FROM ${table} WHERE ID=${id}`;
+            const res = await connection.execute(sql);
+            return res.rows ? functions.keysToLowerCase(res.rows[0]) : null;
+        } catch (error) {
+            return error;
+        } finally {
+            if (connection) {
+                try {
+                    await connection.close();
+                } catch (error) {
+                    return error;
+                }
+            }
+        }
+    },
+/////////////////////////////////////////////////////////////////////////////////
     async updateFiltered(table, data, where) {
         try {
             connection = await oracledb.getConnection(config.dborcl);

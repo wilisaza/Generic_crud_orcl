@@ -1,11 +1,15 @@
 const functions = {
 
+    jsonDateCam(date) {
+        return date.substring(0,4) + '-' + date.substring(4,6) + '-' + date.substring(6,8);
+    },
+
 
     dateToYMD(date) {
         var d = date.getDate();
         var m = date.getMonth() + 1; //Month from 0 to 11
         var y = date.getFullYear();
-        return '' + y + '-' + (m <= 9 ? '0' + m : m) + '-' + (d <= 9 ? '0' + d : d);
+        return '' + y + '-' + (m <= 9 ? '0' + m : m) + '-' + (d <= 9 ? '0' + d : d)
     },
 
     keysToLowerCase(obj) {
@@ -35,6 +39,15 @@ const functions = {
         for (let colum in obj){
             if(colum == item){
                 delete obj[item];
+            }
+        }
+        return obj;
+    },
+
+    convertDateCam(obj){
+        for (let colum in obj){
+            if ((typeof obj[colum] === 'string') && (obj[colum].substring(0,2) == '20') && (parseInt(obj[colum].substring(4,6),10) <= 12) && (parseInt(obj[colum].substring(6,8),10) <= 31)){
+                obj[colum] = `TO_DATE('${this.jsonDateCam(obj[colum])},'YYYY-MM-DD')`;
             }
         }
         return obj;
