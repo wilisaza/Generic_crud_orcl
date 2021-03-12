@@ -87,7 +87,7 @@ const orclCtrl= {
 
     //Para inserción con nombre objeto en req.body
     postOneBody: async(req, res) => {
-        let outdata = await orclApi.insertOneRec(req.body);
+        let outdata = await orclApi.insertOneRec1(req.body);
         res.json({
             outdata,
         });

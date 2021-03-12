@@ -176,6 +176,66 @@ const orclApi = {
 
     },
 
+    async insertOneRec1(data) {
+        let convData = functions.keysToLowerCase(data);
+        let objName = convData.table_name;
+        let objData = functions.extractItem(convData,'table_name');
+        let idData = convData.id;
+        let eraseData = [];
+        let recData;
+        let n = 0;
+        let i = 0;
+        let otherData = [];
+
+        for(let colum in objData){
+            if (Array.isArray(objData[colum])){
+                otherData.push(objData[colum]) ;
+                //console.log(otherData);
+                eraseData.push(colum) ;
+            }
+        }
+        
+        i=0;
+        while (i < eraseData.length){
+            objData = await functions.extractItem(objData,eraseData[i]);    
+            i++;
+        }
+        try {
+            try {
+                connection = await oracledb.getConnection(config.dborcl);
+            } catch (error) {
+                console.log(error);
+            }
+            const sql = sentences.insertString(objName, objData);
+            console.info(sql);
+            const res = await connection.execute(sql);
+
+            for(colum in otherData){
+                if (Array.isArray(otherData[colum])){
+                    n = otherData[colum].length;
+                    i = 0;
+                    while (i < n) {
+                        recData = await this.insertOneRec1(otherData[colum][i]);
+                        i++;
+                    }
+                }
+            }
+
+            return this.getOneId(objName, idData);
+        } catch (error) {
+            return error;
+        } finally {
+            if (connection) {
+                try {
+                    await connection.close();
+                } catch (error) {
+                    return error;
+                }
+            }
+        }
+
+    },
+
     async getOneId(table, id) {
         try {
             connection = await oracledb.getConnection(config.dborcl);
